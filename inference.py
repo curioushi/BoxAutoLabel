@@ -9,8 +9,19 @@ import torch.nn as nn
 from PIL import Image
 from tqdm import tqdm
 from pathlib import Path
+from huggingface_hub import hf_hub_download
 
 from common import EfficientNetClassifier, get_transforms
+
+
+def download_model_from_hf(repo_id, filename):
+    """Download model from Hugging Face Hub"""
+    print(f"Downloading model from Hugging Face: {repo_id}/{filename}")
+    model_path = hf_hub_download(
+        repo_id=repo_id, filename=filename, cache_dir="./models"
+    )
+    print(f"Model downloaded to: {model_path}")
+    return model_path
 
 
 def load_model(checkpoint_path: str, device: torch.device):
@@ -47,7 +58,9 @@ def main():
         description="Inference with trained EfficientNet-B3 classifier"
     )
     parser.add_argument(
-        "--model", type=str, required=True, help="Path to trained model checkpoint"
+        "--model",
+        type=str,
+        help="Path to trained model checkpoint (optional, will download from HF if not provided)",
     )
     parser.add_argument("--image", type=str, help="Path to single image for prediction")
     parser.add_argument(
@@ -67,9 +80,19 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
+    # Determine model path
+    if args.model:
+        model_path = args.model
+        print(f"Using local model: {model_path}")
+    else:
+        # Download from Hugging Face
+        model_path = download_model_from_hf(
+            "Curioushi61/BoxAutoLabel", "box_classification.pth"
+        )
+
     # Load model
-    print(f"Loading model from {args.model}")
-    model = load_model(args.model, device)
+    print(f"Loading model from {model_path}")
+    model = load_model(model_path, device)
 
     # Setup transform
     _, transform = get_transforms(args.image_size)
