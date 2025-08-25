@@ -25,36 +25,38 @@ from common import EfficientNetClassifier, get_transforms
 class ImageDataset(Dataset):
     """Custom dataset for image classification"""
 
-    def __init__(self, positive_dir: str, negative_dir: str, transform=None):
+    def __init__(self, positive_dirs: list, negative_dirs: list, transform=None):
         self.transform = transform
         self.images = []
         self.labels = []
 
         # Load positive images (label 1)
-        positive_path = Path(positive_dir)
-        if positive_path.exists():
-            for img_path in positive_path.glob("*.jpg"):
-                self.images.append(str(img_path))
-                self.labels.append(1)
-            for img_path in positive_path.glob("*.jpeg"):
-                self.images.append(str(img_path))
-                self.labels.append(1)
-            for img_path in positive_path.glob("*.png"):
-                self.images.append(str(img_path))
-                self.labels.append(1)
+        for positive_dir in positive_dirs:
+            positive_path = Path(positive_dir)
+            if positive_path.exists():
+                for img_path in positive_path.glob("*.jpg"):
+                    self.images.append(str(img_path))
+                    self.labels.append(1)
+                for img_path in positive_path.glob("*.jpeg"):
+                    self.images.append(str(img_path))
+                    self.labels.append(1)
+                for img_path in positive_path.glob("*.png"):
+                    self.images.append(str(img_path))
+                    self.labels.append(1)
 
         # Load negative images (label 0)
-        negative_path = Path(negative_dir)
-        if negative_path.exists():
-            for img_path in negative_path.glob("*.jpg"):
-                self.images.append(str(img_path))
-                self.labels.append(0)
-            for img_path in negative_path.glob("*.jpeg"):
-                self.images.append(str(img_path))
-                self.labels.append(0)
-            for img_path in negative_path.glob("*.png"):
-                self.images.append(str(img_path))
-                self.labels.append(0)
+        for negative_dir in negative_dirs:
+            negative_path = Path(negative_dir)
+            if negative_path.exists():
+                for img_path in negative_path.glob("*.jpg"):
+                    self.images.append(str(img_path))
+                    self.labels.append(0)
+                for img_path in negative_path.glob("*.jpeg"):
+                    self.images.append(str(img_path))
+                    self.labels.append(0)
+                for img_path in negative_path.glob("*.png"):
+                    self.images.append(str(img_path))
+                    self.labels.append(0)
 
         print(
             f"Loaded {len(self.images)} images: {sum(self.labels)} positive, {len(self.labels) - sum(self.labels)} negative"
@@ -198,16 +200,18 @@ def main():
         description="Train EfficientNet-B3 Image Classifier"
     )
     parser.add_argument(
-        "--positive-dir",
+        "--positive-dirs",
         type=str,
+        nargs="+",
         required=True,
-        help="Directory containing positive images",
+        help="Directories containing positive images (can specify multiple)",
     )
     parser.add_argument(
-        "--negative-dir",
+        "--negative-dirs",
         type=str,
+        nargs="+",
         required=True,
-        help="Directory containing negative images",
+        help="Directories containing negative images (can specify multiple)",
     )
     parser.add_argument(
         "--batch-size", type=int, default=16, help="Batch size for training"
@@ -218,7 +222,7 @@ def main():
     parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
     parser.add_argument("--image-size", type=int, default=300, help="Input image size")
     parser.add_argument(
-        "--val-split", type=float, default=0.2, help="Validation split ratio"
+        "--val-split", type=float, default=0.1, help="Validation split ratio"
     )
     parser.add_argument(
         "--save-dir",
@@ -249,7 +253,7 @@ def main():
 
     # Create dataset
     dataset = ImageDataset(
-        args.positive_dir, args.negative_dir, transform=train_transform
+        args.positive_dirs, args.negative_dirs, transform=train_transform
     )
 
     if len(dataset) == 0:
@@ -379,8 +383,8 @@ def main():
 
     # Save training config
     config = {
-        "positive_dir": args.positive_dir,
-        "negative_dir": args.negative_dir,
+        "positive_dirs": args.positive_dirs,
+        "negative_dirs": args.negative_dirs,
         "batch_size": args.batch_size,
         "epochs": args.epochs,
         "learning_rate": args.lr,
