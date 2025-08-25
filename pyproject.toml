@@ -21,3 +21,7 @@ dev = [
     "huggingface-hub[cli]>=0.34.4",
     "ruff>=0.12.9",
 ]
+
+[[tool.uv.index]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
